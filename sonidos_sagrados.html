@@ -1,0 +1,1223 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sonidos Sagrados</title>
+  <style>
+    :root {
+      --bg: #0b0d12;
+      --panel: #151a22;
+      --ink: #f2f4f8;
+      --muted: #a7b1c2;
+      --gold: #f4c66b;
+      --emerald: #76f1c4;
+      --crimson: #ff8a7a;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Cinzel", "Georgia", serif;
+      color: var(--ink);
+      background:
+        radial-gradient(900px 700px at 20% -20%, rgba(244, 198, 107, 0.25), transparent 60%),
+        radial-gradient(800px 800px at 120% 20%, rgba(118, 241, 196, 0.2), transparent 60%),
+        radial-gradient(700px 700px at 40% 120%, rgba(255, 138, 122, 0.2), transparent 60%),
+        var(--bg);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 32px 18px;
+    }
+
+    .shell {
+      width: min(1200px, 100%);
+      display: grid;
+      grid-template-columns: minmax(260px, 340px) 1fr;
+      gap: 22px;
+    }
+
+    @media (max-width: 900px) {
+      .shell { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: linear-gradient(160deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 22px;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      margin: 0 0 14px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .control {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .control label {
+      font-size: 0.9rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      flex: 1 1 120px;
+      padding: 10px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      color: var(--ink);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+
+    .btn.active {
+      border-color: rgba(244, 198, 107, 0.7);
+      background: linear-gradient(130deg, rgba(244, 198, 107, 0.3), rgba(118, 241, 196, 0.25));
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--gold);
+    }
+
+    .cta {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .cta button {
+      flex: 1;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: none;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .start {
+      background: var(--gold);
+      color: #1a1206;
+    }
+
+    .stop {
+      background: rgba(255,255,255,0.08);
+      color: var(--crimson);
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .display {
+      display: grid;
+      gap: 14px;
+    }
+
+    .readout {
+      display: grid;
+      gap: 6px;
+      grid-template-columns: repeat(2, minmax(140px, 1fr));
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .readout span {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    canvas {
+      width: 100%;
+      height: 340px;
+      background: rgba(6, 8, 12, 0.8);
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .hint {
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .nav-link {
+      display: inline-block;
+      margin-top: 14px;
+      color: var(--emerald);
+      text-decoration: none;
+      font-size: 0.9rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .mantras.hidden { display: none; }
+    .mantras {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(6, 8, 12, 0.8);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      color: #eaeaea;
+    }
+    .mantras h2 { margin: 0 0 10px; font-size: 18px; }
+    .mantras .grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
+    @media (min-width: 900px) { .mantras .grid { grid-template-columns: 1.2fr 0.8fr; } }
+    .mantras .card {
+      background: #111114; border: 1px solid #1f1f26;
+      border-radius: 14px; padding: 14px;
+    }
+    .mantras .row { margin: 10px 0; display: grid; gap: 8px; }
+    .mantras .row.two { grid-template-columns: 1fr 1fr; }
+    .mantras label { font-size: 13px; opacity: 0.85; }
+    .mantras input, .mantras select, .mantras button {
+      width: 100%; border-radius: 12px; border: 1px solid #2a2a33;
+      background: #0f0f13; color: #eaeaea; padding: 10px 12px;
+    }
+    .mantras input[type="range"] { padding: 0; height: 38px; }
+    .mantras button { cursor: pointer; font-weight: 650; }
+    .mantras .primary { background: #1b2a44; border-color: #263a5e; }
+    .mantras .danger { background: #3a171a; border-color: #5a2328; }
+    .mantras button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .mantras .list { display: grid; gap: 8px; margin-top: 10px; }
+    .mantras .item {
+      padding: 10px 12px; border-radius: 12px; border: 1px solid #262631;
+      background: #0d0d11;
+    }
+    .mantras .item .top { display: flex; justify-content: space-between; gap: 10px; }
+    .mantras .item .name { font-weight: 700; }
+    .mantras .badge {
+      font-size: 12px; padding: 4px 8px; border-radius: 999px;
+      border: 1px solid #2b2b36; opacity: 0.9;
+    }
+    .mantras .meta { margin-top: 6px; font-size: 12px; opacity: 0.75; }
+    .mantras .now {
+      padding: 10px 12px; border: 1px dashed #2b2b36; border-radius: 12px;
+      background: #0c0c10; opacity: 0.9;
+    }
+    .mantras .hint { font-size: 12px; opacity: 0.7; margin-top: 4px; }
+    .mantras .syllables { margin-top: 12px; }
+    .mantras .syllables .label { font-size: 13px; opacity: 0.8; margin-bottom: 8px; }
+    .mantras .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .mantras .chip {
+      padding: 8px 10px; border-radius: 999px; border: 1px solid #2a2a33;
+      background: #0f0f13; font-size: 13px;
+    }
+    .mantras .chip.active { outline: 2px solid #3a4f7a; }
+    .mantras .footerNote { margin-top: 12px; font-size: 12px; opacity: 0.7; }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="panel">
+      <h1>Sonidos sagrados</h1>
+
+      <div class="control">
+        <label>Instrumento</label>
+        <div class="row" id="instrument-buttons">
+          <button class="btn active" data-instrument="pure">Tono puro</button>
+          <button class="btn" data-instrument="flute">Flauta</button>
+          <button class="btn" data-instrument="bowl">Cuenco</button>
+          <button class="btn" data-instrument="gong">Gong</button>
+          <button class="btn" data-instrument="tibet-horn">Dungchen</button>
+          <button class="btn" data-instrument="mantras">Mantras</button>
+        </div>
+      </div>
+
+      <div class="control">
+        <label>Intensidad: <span id="amp-value">0.45</span></label>
+        <input id="amp" type="range" min="0" max="1" step="0.01" value="0.45" />
+      </div>
+
+      <div class="control">
+        <label>Frecuencia base (Hz): <span id="freq-value">432</span></label>
+        <input id="freq" type="range" min="20" max="980" step="1" value="432" />
+      </div>
+
+      <div class="control">
+        <label>Armonicos: <span id="harm-value">6</span></label>
+        <input id="harm" type="range" min="1" max="16" step="1" value="6" />
+      </div>
+
+      <div class="control">
+        <label>Reverberación: <span id="verb-value">25%</span></label>
+        <input id="verb" type="range" min="0" max="0.6" step="0.01" value="0.25" />
+      </div>
+
+      <div class="control">
+        <label>Tiempo de decaimiento: <span id="decay-value">8.0 s</span></label>
+        <input id="decay" type="range" min="1" max="30" step="0.1" value="8.0" />
+      </div>
+
+      <div class="control">
+        <label>Brillo gong: <span id="gong-bright-value">0.5</span></label>
+        <input id="gong-bright" type="range" min="0" max="1" step="0.05" value="0.5" />
+      </div>
+
+      <div class="control">
+        <label>Redondez cuenco: <span id="bowl-round-value">0.5</span></label>
+        <input id="bowl-round" type="range" min="0" max="1" step="0.05" value="0.5" />
+      </div>
+
+      <div class="control">
+        <label>Filtro armónicos: <span id="harm-filter-value">0.5</span></label>
+        <input id="harm-filter" type="range" min="0" max="1" step="0.05" value="0.5" />
+      </div>
+
+      <div class="cta">
+        <button class="start" id="start">Reproducir</button>
+        <button class="stop" id="stop">Detener</button>
+      </div>
+
+      <p class="hint">Cada instrumento combina armónicos y envolventes distintas. Ajusta la reverberación para crear un espacio más amplio.</p>
+      <a class="nav-link" href="index.html">Volver al generador principal</a>
+    </section>
+
+    <section class="panel display">
+      <div class="readout">
+        <div>Instrumento: <span id="read-inst">Tono puro</span></div>
+        <div>Estado: <span id="read-state">Silencio</span></div>
+        <div>Frecuencia: <span id="read-freq">432 Hz</span></div>
+        <div>Reverb: <span id="read-verb">25%</span></div>
+        <div>Decaimiento: <span id="read-decay">5.5 s</span></div>
+      </div>
+      <canvas id="scope" width="900" height="340"></canvas>
+      <p id="wave-hint" class="hint">La onda muestra la suma de armónicos con la envolvente del instrumento seleccionado.</p>
+      <a class="nav-link" href="index.html">Volver al generador principal</a>
+
+      <div id="mantras-panel" class="mantras hidden">
+        <h2>Mantras</h2>
+        <div class="grid">
+          <section class="card">
+            <h2>Biblioteca</h2>
+
+            <div class="row">
+              <label>Buscar</label>
+              <input id="m-q" placeholder="OM, Gayatri, compasión..." />
+            </div>
+
+            <div class="row two">
+              <div>
+                <label>Modo</label>
+                <select id="m-modo">
+                  <option value="">(Todos)</option>
+                  <option value="meditacion_profunda">Meditación profunda</option>
+                  <option value="enfoque">Enfoque</option>
+                  <option value="compasion">Compasión</option>
+                  <option value="proteccion">Protección</option>
+                  <option value="purificacion">Purificación</option>
+                  <option value="gratitud">Gratitud</option>
+                  <option value="sueno">Sueño</option>
+                  <option value="energia">Energía</option>
+                </select>
+              </div>
+
+              <div>
+                <label>Categoría</label>
+                <select id="m-cat">
+                  <option value="">(Todas)</option>
+                  <option value="grave">Grave</option>
+                  <option value="media">Media</option>
+                  <option value="aguda">Aguda</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="m-list" class="list"></div>
+          </section>
+
+          <section class="card">
+            <h2>Reproductor</h2>
+
+            <div id="m-now" class="now">Selecciona un mantra…</div>
+
+            <div class="row two">
+              <div>
+                <label>Dron (Hz)</label>
+                <input id="m-dronHz" type="number" step="0.01" min="20" max="500" value="136.10" />
+              </div>
+              <div>
+                <label>BPM</label>
+                <input id="m-bpm" type="number" step="1" min="10" max="180" value="42" />
+              </div>
+            </div>
+
+            <div class="row two">
+              <div>
+                <label>Volumen dron</label>
+                <input id="m-dronVol" type="range" min="0" max="1" step="0.01" value="0.60" />
+              </div>
+              <div>
+                <label>Volumen guía</label>
+                <input id="m-pulseVol" type="range" min="0" max="1" step="0.01" value="0.35" />
+              </div>
+            </div>
+
+            <div class="row two">
+              <div>
+                <label><input id="m-binauralOn" type="checkbox" checked /> Binaural</label>
+                <div class="hint">Usa audífonos para sentirlo.</div>
+              </div>
+              <div>
+                <label>Δ binaural (Hz)</label>
+                <input id="m-delta" type="number" step="0.1" min="0" max="40" value="6.0" />
+              </div>
+            </div>
+
+            <div class="row two">
+              <button id="m-play" class="primary">▶ Iniciar</button>
+              <button id="m-stop" class="danger" disabled>■ Detener</button>
+            </div>
+
+            <div class="syllables">
+              <div class="label">Sílabas</div>
+              <div id="m-syll" class="chips"></div>
+            </div>
+
+            <div class="footerNote">
+              Si el audio no arranca: toca “Iniciar” otra vez (Android a veces bloquea la primera activación).
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const audioState = {
+      ctx: null,
+      masterGain: null,
+      verb: null,
+      verbGain: null,
+      instrument: "pure",
+      running: false,
+      voiceGain: null,
+      nodes: []
+    };
+
+    const ui = {
+      amp: document.getElementById("amp"),
+      freq: document.getElementById("freq"),
+      harm: document.getElementById("harm"),
+      verb: document.getElementById("verb"),
+      decay: document.getElementById("decay"),
+      ampValue: document.getElementById("amp-value"),
+      freqValue: document.getElementById("freq-value"),
+      harmValue: document.getElementById("harm-value"),
+      verbValue: document.getElementById("verb-value"),
+      decayValue: document.getElementById("decay-value"),
+      readInst: document.getElementById("read-inst"),
+      readState: document.getElementById("read-state"),
+      readFreq: document.getElementById("read-freq"),
+      readVerb: document.getElementById("read-verb"),
+      readDecay: document.getElementById("read-decay"),
+      buttons: Array.from(document.querySelectorAll("#instrument-buttons .btn")),
+      gongBright: document.getElementById("gong-bright"),
+      bowlRound: document.getElementById("bowl-round"),
+      harmFilter: document.getElementById("harm-filter"),
+      gongBrightValue: document.getElementById("gong-bright-value"),
+      bowlRoundValue: document.getElementById("bowl-round-value"),
+      harmFilterValue: document.getElementById("harm-filter-value"),
+      start: document.getElementById("start"),
+      stop: document.getElementById("stop"),
+      canvas: document.getElementById("scope"),
+      waveHint: document.getElementById("wave-hint"),
+      mantrasPanel: document.getElementById("mantras-panel")
+    };
+
+    const labels = {
+      pure: "Tono puro",
+      flute: "Flauta",
+      bowl: "Cuenco",
+      gong: "Gong",
+      "tibet-horn": "Dungchen",
+      "mantras": "Mantras"
+    };
+
+
+    function ensureAudio() {
+      if (!audioState.ctx) {
+        audioState.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        audioState.masterGain = audioState.ctx.createGain();
+        audioState.verbGain = audioState.ctx.createGain();
+        audioState.verb = createReverb(audioState.ctx, 2.6);
+        audioState.masterGain.connect(audioState.ctx.destination);
+        audioState.masterGain.connect(audioState.verbGain);
+        audioState.verbGain.connect(audioState.verb);
+        audioState.verb.connect(audioState.ctx.destination);
+      }
+    }
+
+    function createReverb(ctx, seconds) {
+      const rate = ctx.sampleRate;
+      const length = rate * seconds;
+      const impulse = ctx.createBuffer(2, length, rate);
+      for (let ch = 0; ch < 2; ch++) {
+        const data = impulse.getChannelData(ch);
+        for (let i = 0; i < length; i++) {
+          const decay = Math.pow(1 - i / length, 2.2);
+          data[i] = (Math.random() * 2 - 1) * decay;
+        }
+      }
+      const convolver = ctx.createConvolver();
+      convolver.buffer = impulse;
+      return convolver;
+    }
+
+    function getProfile() {
+      const harmonics = parseInt(ui.harm.value, 10);
+      const baseProfiles = {
+        pure: {
+          ratios: [1],
+          gains: [1],
+        decay: 3.2,
+        attack: 0.03,
+        sustain: true,
+        noise: 0
+      },
+      flute: {
+        ratios: [1, 2, 3],
+        gains: [1, 0.22, 0.12],
+        decay: 3.0,
+        attack: 0.05,
+        sustain: true,
+        noise: 0.02
+      },
+        bowl: {
+          ratios: [1, 1.48, 2.15, 2.72, 3.3, 4.12, 4.7],
+          gains: [1, 0.65, 0.5, 0.36, 0.28, 0.22, 0.18],
+          decay: 6.8,
+          attack: 0.02,
+          sustain: false,
+          noise: 0.02
+        },
+      gong: {
+        ratios: [0.5, 1, 1.27, 1.42, 1.62, 2.05, 2.7, 3.05, 3.9, 4.6],
+        gains: [0.22, 1, 0.8, 0.6, 0.48, 0.42, 0.3, 0.24, 0.2, 0.16],
+        decay: 12.0,
+        attack: 0.05,
+        sustain: false,
+        noise: 0.12
+      },
+      "tibet-horn": {
+        synthesis: "harmonic",
+        harmonics: 25,
+        p: 1.1,
+        decay: 6.0,
+        attack: 0.5,
+        release: 0.5,
+        sustain: true,
+        noise: 0
+      }
+    };
+
+      const base = baseProfiles[audioState.instrument];
+      const profile = {
+        ...base,
+        ratios: base.ratios ? base.ratios.slice() : [],
+        gains: base.gains ? base.gains.slice() : []
+      };
+
+      // Ajustes tímbricos
+      if (audioState.instrument === "gong" && profile.gains) {
+        const bright = (parseFloat(ui.gongBright.value) - 0.5) * 2; // -1..1
+        profile.gains = profile.gains.map((g, i) => {
+          const tilt = 1 + bright * (i / profile.gains.length) * 0.45;
+          return g * tilt;
+        });
+        profile.noise = Math.max(0.04, profile.noise + bright * 0.04);
+      }
+
+      if (audioState.instrument === "bowl" && profile.gains) {
+        const round = (parseFloat(ui.bowlRound.value) - 0.5) * 2;
+        profile.gains = profile.gains.map((g, i) => {
+          const tilt = 1 + (-round) * (i / profile.gains.length) * 0.5;
+          return g * tilt;
+        });
+      }
+
+      const filter = (parseFloat(ui.harmFilter.value) - 0.5) * 2;
+      if (Math.abs(filter) > 0.001 && profile.gains) {
+        profile.gains = profile.gains.map((g, i) => {
+          const weight = filter > 0
+            ? 1 - (i / profile.gains.length) * 0.35
+            : 1 + (i / profile.gains.length) * 0.35;
+          return g * weight;
+        });
+      }
+      if (profile.ratios.length && harmonics > profile.ratios.length) {
+        const extra = harmonics - profile.ratios.length;
+        for (let i = 0; i < extra; i++) {
+          const n = profile.ratios.length + 1 + i;
+          profile.ratios.push(n);
+          profile.gains.push(profile.gains[profile.gains.length - 1] * 0.7);
+        }
+      }
+      return profile;
+    }
+
+    function updateInstrument() {
+      ui.readInst.textContent = labels[audioState.instrument];
+      toggleMantrasUI();
+      if (audioState.running && audioState.instrument !== "mantras") {
+        stopSound(true);
+        startSound();
+      }
+    }
+
+    function toggleMantrasUI() {
+      const isMantras = audioState.instrument === "mantras";
+      ui.mantrasPanel.classList.toggle("hidden", !isMantras);
+      ui.canvas.style.display = isMantras ? "none" : "block";
+      ui.waveHint.style.display = isMantras ? "none" : "block";
+      if (isMantras) {
+        stopSound(true);
+      } else if (typeof mStopEngine === "function") {
+        mStopEngine(true);
+      }
+    }
+
+    function updateParams() {
+      const amp = parseFloat(ui.amp.value);
+      const freq = parseFloat(ui.freq.value);
+      const harm = parseInt(ui.harm.value, 10);
+      const verb = parseFloat(ui.verb.value);
+      const decay = parseFloat(ui.decay.value);
+
+      ui.ampValue.textContent = amp.toFixed(2);
+      ui.freqValue.textContent = freq.toFixed(0);
+      ui.harmValue.textContent = harm;
+      ui.verbValue.textContent = `${Math.round(verb * 100)}%`;
+      ui.decayValue.textContent = `${decay.toFixed(1)} s`;
+
+      ui.readFreq.textContent = `${freq.toFixed(0)} Hz`;
+      ui.readVerb.textContent = `${Math.round(verb * 100)}%`;
+      ui.readDecay.textContent = `${decay.toFixed(1)} s`;
+
+      if (audioState.masterGain) {
+        audioState.masterGain.gain.setTargetAtTime(amp, audioState.ctx.currentTime, 0.05);
+      }
+      if (audioState.verbGain) {
+        audioState.verbGain.gain.setTargetAtTime(verb, audioState.ctx.currentTime, 0.08);
+      }
+      if (audioState.nodes.length) {
+        const profile = getProfile();
+        audioState.nodes.forEach((node, index) => {
+          if (node.type === "osc") {
+            if (profile.synthesis === "harmonic") {
+              node.osc.frequency.setTargetAtTime(freq, audioState.ctx.currentTime, 0.05);
+            } else {
+              const ratio = profile.ratios[index % profile.ratios.length];
+              node.osc.frequency.setTargetAtTime(freq * ratio, audioState.ctx.currentTime, 0.05);
+            }
+          }
+        });
+      }
+      drawWaveform();
+    }
+
+    function startSound() {
+      ensureAudio();
+      if (audioState.instrument === "mantras") return;
+      if (audioState.running) return;
+
+      const ctx = audioState.ctx;
+      const profile = getProfile();
+      const freq = parseFloat(ui.freq.value);
+      const decay = parseFloat(ui.decay.value);
+      const now = ctx.currentTime;
+
+      audioState.masterGain.gain.value = parseFloat(ui.amp.value);
+      audioState.verbGain.gain.value = parseFloat(ui.verb.value);
+
+      audioState.voiceGain = ctx.createGain();
+      audioState.voiceGain.gain.value = 0;
+
+      if (audioState.instrument === "tibet-horn") {
+        const lowpass = ctx.createBiquadFilter();
+        lowpass.type = "lowpass";
+        lowpass.frequency.value = 900;
+        lowpass.Q.value = 0.7;
+
+        const body = ctx.createBiquadFilter();
+        body.type = "peaking";
+        body.frequency.value = 120;
+        body.Q.value = 1.1;
+        body.gain.value = 4;
+
+        audioState.voiceGain.connect(body);
+        body.connect(lowpass);
+        lowpass.connect(audioState.masterGain);
+        lowpass.connect(audioState.verbGain);
+
+        audioState.nodes.push({ type: "filter", node: body });
+        audioState.nodes.push({ type: "filter", node: lowpass });
+      } else {
+        audioState.voiceGain.connect(audioState.masterGain);
+        audioState.voiceGain.connect(audioState.verbGain);
+      }
+
+      audioState.nodes = [];
+
+      if (profile.synthesis === "harmonic") {
+        const osc = ctx.createOscillator();
+        const real = new Float32Array(profile.harmonics + 1);
+        const imag = new Float32Array(profile.harmonics + 1);
+        for (let n = 1; n <= profile.harmonics; n++) {
+          const amp = 1 / Math.pow(n, profile.p);
+          real[n] = 0;
+          imag[n] = amp;
+        }
+        const wave = ctx.createPeriodicWave(real, imag, { disableNormalization: true });
+        osc.setPeriodicWave(wave);
+        osc.frequency.value = freq;
+        osc.connect(audioState.voiceGain);
+        osc.start();
+        audioState.nodes.push({ type: "osc", osc, gain: audioState.voiceGain });
+
+        if (audioState.instrument === "tibet-horn") {
+          const lfo = ctx.createOscillator();
+          lfo.type = "sine";
+          lfo.frequency.value = 0.22;
+          const lfoGain = ctx.createGain();
+          lfoGain.gain.value = 6;
+          lfo.connect(lfoGain);
+          lfoGain.connect(osc.detune);
+          lfo.start();
+          audioState.nodes.push({ type: "lfo", osc: lfo, gain: lfoGain });
+        }
+      } else {
+        const detuneSpread = audioState.instrument === "gong" ? 20 : audioState.instrument === "bowl" ? 9 : 4;
+
+        profile.ratios.forEach((ratio, index) => {
+          const osc = ctx.createOscillator();
+          osc.type = "sine";
+          osc.frequency.value = freq * ratio;
+          osc.detune.value = (Math.random() * detuneSpread - detuneSpread / 2);
+          const gain = ctx.createGain();
+          gain.gain.value = profile.gains[index] || profile.gains[profile.gains.length - 1];
+          osc.connect(gain);
+          gain.connect(audioState.voiceGain);
+          osc.start();
+          audioState.nodes.push({ type: "osc", osc, gain });
+        });
+
+        if (audioState.instrument === "gong") {
+          const lfo = ctx.createOscillator();
+          lfo.type = "sine";
+          lfo.frequency.value = 0.12;
+          const lfoGain = ctx.createGain();
+          lfoGain.gain.value = 20;
+          lfo.connect(lfoGain);
+          audioState.nodes.forEach((node) => {
+            if (node.type === "osc") {
+              lfoGain.connect(node.osc.detune);
+            }
+          });
+          lfo.start();
+          audioState.nodes.push({ type: "lfo", osc: lfo, gain: lfoGain });
+        }
+      }
+
+      if (profile.noise > 0 || audioState.instrument === "tibet-horn") {
+        const bufferSize = ctx.sampleRate * 1.2;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = (Math.random() * 2 - 1) * 0.6;
+        }
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+        noise.loop = profile.sustain;
+        const filter = ctx.createBiquadFilter();
+        filter.type = "bandpass";
+        filter.frequency.value = audioState.instrument === "gong" ? freq * 2.2 : audioState.instrument === "tibet-horn" ? 320 : freq * 1.6;
+        filter.Q.value = audioState.instrument === "tibet-horn" ? 0.55 : 0.8;
+        const noiseGain = ctx.createGain();
+        noiseGain.gain.value = audioState.instrument === "tibet-horn" ? 0.06 : profile.noise;
+        noise.connect(filter);
+        filter.connect(noiseGain);
+        noiseGain.connect(audioState.voiceGain);
+        noise.start();
+        audioState.nodes.push({ type: "noise", noise, gain: noiseGain });
+
+        if (audioState.instrument === "gong") {
+          const air = ctx.createBufferSource();
+          air.buffer = buffer;
+          air.loop = profile.sustain;
+          const airFilter = ctx.createBiquadFilter();
+          airFilter.type = "bandpass";
+          airFilter.frequency.value = 1800;
+          airFilter.Q.value = 0.4;
+          const airGain = ctx.createGain();
+          airGain.gain.value = 0.01;
+          air.connect(airFilter);
+          airFilter.connect(airGain);
+          airGain.connect(audioState.voiceGain);
+          air.start();
+          audioState.nodes.push({ type: "noise", noise: air, gain: airGain });
+        }
+      }
+
+      audioState.voiceGain.gain.setValueAtTime(0.0001, now);
+      audioState.voiceGain.gain.exponentialRampToValueAtTime(1, now + profile.attack);
+
+      if (!profile.sustain) {
+        const decayTime = Math.max(0.4, profile.decay * (decay / 5.5));
+        audioState.nodes.forEach((node, index) => {
+          if (node.type === "osc") {
+            const tail = decayTime * (1 + index * 0.12);
+            if (node.gain && node.gain.gain) {
+              node.gain.gain.exponentialRampToValueAtTime(0.0001, now + tail);
+            }
+          }
+        });
+        audioState.voiceGain.gain.exponentialRampToValueAtTime(0.0001, now + decayTime * 1.2);
+      }
+
+      audioState.running = true;
+      ui.readState.textContent = "Reproduciendo";
+    }
+
+    function stopSound(immediate = false) {
+      if (!audioState.running) return;
+      const now = audioState.ctx.currentTime;
+      const profile = getProfile();
+      const release = immediate ? 0.05 : (profile.release || 0.3);
+
+      if (audioState.voiceGain) {
+        audioState.voiceGain.gain.cancelScheduledValues(now);
+        audioState.voiceGain.gain.exponentialRampToValueAtTime(0.0001, now + release);
+      }
+
+      audioState.nodes.forEach((node) => {
+        if (node.type === "osc") {
+          node.osc.stop(now + release + 0.05);
+        } else if (node.type === "noise") {
+          node.noise.stop(now + release + 0.05);
+        } else if (node.type === "lfo") {
+          node.osc.stop(now + release + 0.05);
+        }
+      });
+
+      setTimeout(() => {
+        audioState.nodes.forEach((node) => {
+          if (node.type === "osc") {
+            node.osc.disconnect();
+            if (node.gain && node.gain.disconnect) node.gain.disconnect();
+          } else if (node.type === "noise") {
+            node.noise.disconnect();
+            node.gain.disconnect();
+          } else if (node.type === "lfo") {
+            node.osc.disconnect();
+            node.gain.disconnect();
+          } else if (node.type === "filter") {
+            node.node.disconnect();
+          }
+        });
+        if (audioState.voiceGain) {
+          audioState.voiceGain.disconnect();
+        }
+        audioState.nodes = [];
+        audioState.voiceGain = null;
+        audioState.running = false;
+        ui.readState.textContent = "Silencio";
+      }, (release + 0.06) * 1000);
+    }
+
+    function drawWaveform() {
+      const canvas = ui.canvas;
+      const ctx = canvas.getContext("2d");
+      const w = canvas.width;
+      const h = canvas.height;
+
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = "rgba(6, 8, 12, 0.7)";
+      ctx.fillRect(0, 0, w, h);
+
+      const mid = h / 2;
+      ctx.strokeStyle = "rgba(244, 198, 107, 0.8)";
+      ctx.lineWidth = 2.2;
+
+      const samples = 512;
+      const amp = parseFloat(ui.amp.value);
+      const harmonics = parseInt(ui.harm.value, 10);
+      const profile = getProfile();
+
+      ctx.beginPath();
+      for (let i = 0; i <= samples; i++) {
+        const t = i / samples;
+        const phase = t * 2 * Math.PI;
+        let value = 0;
+
+        if (audioState.instrument === "pure") {
+          value = Math.sin(phase);
+        } else if (audioState.instrument === "tibet-horn") {
+          const limit = profile.harmonics || 25;
+          const p = profile.p || 1.1;
+          for (let n = 1; n <= limit; n++) {
+            value += Math.sin(n * phase) / Math.pow(n, p);
+          }
+        } else {
+          const limit = Math.min(harmonics, profile.ratios.length);
+          for (let n = 0; n < limit; n++) {
+            value += Math.sin(profile.ratios[n] * phase) * (profile.gains[n] || 0.1);
+          }
+        }
+
+        value = value * amp;
+        const x = (i / samples) * w;
+        const y = mid - value * (h * 0.35);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      ctx.strokeStyle = "rgba(118, 241, 196, 0.3)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, mid);
+      ctx.lineTo(w, mid);
+      ctx.stroke();
+    }
+
+    ui.buttons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        ui.buttons.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        audioState.instrument = btn.dataset.instrument;
+        updateInstrument();
+        drawWaveform();
+      });
+    });
+
+    function updateToneLabels() {
+      ui.gongBrightValue.textContent = parseFloat(ui.gongBright.value).toFixed(2);
+      ui.bowlRoundValue.textContent = parseFloat(ui.bowlRound.value).toFixed(2);
+      ui.harmFilterValue.textContent = parseFloat(ui.harmFilter.value).toFixed(2);
+    }
+
+    ui.amp.addEventListener("input", updateParams);
+    ui.freq.addEventListener("input", updateParams);
+    ui.harm.addEventListener("input", () => {
+      updateParams();
+      updateInstrument();
+    });
+    ui.verb.addEventListener("input", updateParams);
+    ui.decay.addEventListener("input", updateParams);
+    ui.gongBright.addEventListener("input", () => {
+      updateToneLabels();
+      updateInstrument();
+      drawWaveform();
+    });
+    ui.bowlRound.addEventListener("input", () => {
+      updateToneLabels();
+      updateInstrument();
+      drawWaveform();
+    });
+    ui.harmFilter.addEventListener("input", () => {
+      updateToneLabels();
+      updateInstrument();
+      drawWaveform();
+    });
+
+    ui.start.addEventListener("click", () => {
+      startSound();
+      updateParams();
+    });
+
+    ui.stop.addEventListener("click", stopSound);
+
+    // Mantras (embebido)
+    let mMantras = [];
+    let mSelected = null;
+
+    let mCtx = null;
+    let mMaster = null;
+    let mDronOsc = null;
+    let mHarmOsc = null;
+    let mDronGain = null;
+    let mBinOscL = null;
+    let mBinOscR = null;
+    let mBinGainL = null;
+    let mBinGainR = null;
+    let mPulseGain = null;
+    let mTimer = null;
+    let mSyllIndex = 0;
+    let mRunning = false;
+
+    const m$ = (id) => document.getElementById(`m-${id}`);
+
+    async function mLoadMantras() {
+      try {
+        const res = await fetch("mantras.json", { cache: "no-store" });
+        mMantras = await res.json();
+        mRenderList();
+      } catch (err) {
+        const list = m$("list");
+        if (list) list.innerHTML = `<div class="meta">No se pudo cargar mantras.json</div>`;
+      }
+    }
+
+    function mNormalize(s) {
+      return (s || "")
+        .toString()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "");
+    }
+
+    function mRenderList() {
+      const q = mNormalize(m$("q").value);
+      const modo = m$("modo").value;
+      const cat = m$("cat").value;
+
+      const list = m$("list");
+      list.innerHTML = "";
+
+      const filtered = mMantras.filter(m => {
+        const text = mNormalize([m.nombre, m.tradicion, (m.intencion||[]).join(" "), (m.silabas||[]).join(" ")].join(" "));
+        const okQ = !q || text.includes(q);
+        const okM = !modo || m.modo === modo;
+        const okC = !cat || m.categoria_frecuencia === cat;
+        return okQ && okM && okC;
+      });
+
+      for (const m of filtered) {
+        const div = document.createElement("div");
+        div.className = "item";
+        div.innerHTML = `
+          <div class="top">
+            <div class="name">${m.nombre}</div>
+            <div class="badge">${m.modo || "—"}</div>
+          </div>
+          <div class="meta">
+            dron: <b>${Number(m.dron_hz).toFixed(2)} Hz</b> · bpm: <b>${m.bpm}</b> · sílabas: <b>${(m.silabas||[]).length}</b>
+          </div>
+        `;
+        div.addEventListener("click", () => mSelectMantra(m));
+        list.appendChild(div);
+      }
+
+      if (!filtered.length) {
+        list.innerHTML = `<div class="meta">No hay resultados.</div>`;
+      } else if (!mSelected) {
+        mSelectMantra(filtered[0]);
+      }
+    }
+
+    function mSelectMantra(m) {
+      mSelected = m;
+      m$("now").textContent = `${m.nombre} — dron ${Number(m.dron_hz).toFixed(2)} Hz · bpm ${m.bpm}`;
+      m$("dronHz").value = Number(m.dron_hz).toFixed(2);
+      m$("bpm").value = m.bpm;
+
+      const b = m.binaural || {};
+      m$("binauralOn").checked = !!b.activo;
+      m$("delta").value = (b.delta_hz ?? 6.0);
+
+      mRenderSyllables(m.silabas || []);
+    }
+
+    function mRenderSyllables(sylls) {
+      const container = m$("syll");
+      container.innerHTML = "";
+      for (let i = 0; i < sylls.length; i++) {
+        const chip = document.createElement("div");
+        chip.className = "chip";
+        chip.textContent = sylls[i];
+        chip.dataset.i = String(i);
+        container.appendChild(chip);
+      }
+    }
+
+    function mSetActiveSyllable(i) {
+      const chips = m$("syll").querySelectorAll(".chip");
+      chips.forEach(c => c.classList.remove("active"));
+      const hit = m$("syll").querySelector(`.chip[data-i=\"${i}\"]`);
+      if (hit) hit.classList.add("active");
+    }
+
+    function mEnsureAudio() {
+      if (mCtx) return;
+
+      mCtx = audioState.ctx || new (window.AudioContext || window.webkitAudioContext)();
+      mMaster = mCtx.createGain();
+      mMaster.gain.value = 1.0;
+      mMaster.connect(mCtx.destination);
+
+      mDronGain = mCtx.createGain();
+      mDronGain.gain.value = Number(m$("dronVol").value) || 0.6;
+      mDronGain.connect(mMaster);
+
+      mPulseGain = mCtx.createGain();
+      mPulseGain.gain.value = Number(m$("pulseVol").value) || 0.35;
+      mPulseGain.connect(mMaster);
+    }
+
+    async function mStartEngine() {
+      if (!mSelected) {
+        m$("now").textContent = "Selecciona un mantra primero…";
+        return;
+      }
+
+      mEnsureAudio();
+      if (mCtx.state === "suspended") {
+        await mCtx.resume();
+      }
+      mStopEngine(true);
+
+      const dronHz = Number(m$("dronHz").value);
+      const bpm = Number(m$("bpm").value);
+      const binauralOn = m$("binauralOn").checked;
+      const delta = Number(m$("delta").value);
+      if (mDronGain) mDronGain.gain.value = Number(m$("dronVol").value) || 0.6;
+      if (mPulseGain) mPulseGain.gain.value = Number(m$("pulseVol").value) || 0.35;
+
+      mDronOsc = mCtx.createOscillator();
+      mDronOsc.type = "sine";
+      mDronOsc.frequency.value = dronHz;
+
+      mHarmOsc = mCtx.createOscillator();
+      mHarmOsc.type = "sine";
+      mHarmOsc.frequency.value = dronHz * 2;
+
+      const harmGain = mCtx.createGain();
+      harmGain.gain.value = 0.2;
+
+      mDronOsc.connect(mDronGain);
+      mHarmOsc.connect(harmGain);
+      harmGain.connect(mDronGain);
+
+      if (binauralOn && delta > 0) {
+        const fc = (mSelected.binaural?.portadora_hz ?? 200);
+        const mix = (mSelected.binaural?.mix ?? 0.06);
+
+        mBinOscL = mCtx.createOscillator();
+        mBinOscR = mCtx.createOscillator();
+        mBinOscL.type = "sine";
+        mBinOscR.type = "sine";
+        mBinOscL.frequency.value = fc + (delta / 2);
+        mBinOscR.frequency.value = fc - (delta / 2);
+
+        mBinGainL = mCtx.createGain();
+        mBinGainR = mCtx.createGain();
+        mBinGainL.gain.value = mix;
+        mBinGainR.gain.value = mix;
+
+        const panL = mCtx.createStereoPanner();
+        const panR = mCtx.createStereoPanner();
+        panL.pan.value = -1;
+        panR.pan.value =  1;
+
+        mBinOscL.connect(mBinGainL); mBinGainL.connect(panL); panL.connect(mMaster);
+        mBinOscR.connect(mBinGainR); mBinGainR.connect(panR); panR.connect(mMaster);
+      }
+
+      mDronOsc.start();
+      mHarmOsc.start();
+      if (mBinOscL) mBinOscL.start();
+      if (mBinOscR) mBinOscR.start();
+
+      const sylls = mSelected.silabas || [];
+      mSyllIndex = 0;
+      const intervalMs = Math.max(250, Math.round((60_000 / Math.max(10, bpm))));
+      mRunning = true;
+
+      const tick = () => {
+        if (!mRunning) return;
+
+        if (sylls.length) {
+          mSetActiveSyllable(mSyllIndex);
+          mSyllIndex = (mSyllIndex + 1) % sylls.length;
+        }
+
+        const osc = mCtx.createOscillator();
+        osc.type = "triangle";
+        osc.frequency.value = dronHz * 1.5;
+
+        const g = mCtx.createGain();
+        g.gain.value = 0.0001;
+        osc.connect(g);
+        g.connect(mPulseGain);
+
+        const t0 = mCtx.currentTime;
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime(Math.max(0.001, Number(m$("pulseVol").value)), t0 + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.12);
+
+        osc.start(t0);
+        osc.stop(t0 + 0.14);
+      };
+
+      tick();
+      mTimer = setInterval(tick, intervalMs);
+
+      m$("play").disabled = true;
+      m$("stop").disabled = false;
+    }
+
+    function mStopEngine(silent = false) {
+      mRunning = false;
+      if (mTimer) { clearInterval(mTimer); mTimer = null; }
+      mSetActiveSyllable(-1);
+
+      const stopNode = (node) => { try { node && node.stop && node.stop(); } catch {} };
+      const disconnect = (node) => { try { node && node.disconnect && node.disconnect(); } catch {} };
+
+      stopNode(mDronOsc); disconnect(mDronOsc); mDronOsc = null;
+      stopNode(mHarmOsc); disconnect(mHarmOsc); mHarmOsc = null;
+      stopNode(mBinOscL); disconnect(mBinOscL); mBinOscL = null;
+      stopNode(mBinOscR); disconnect(mBinOscR); mBinOscR = null;
+
+      if (!silent) {
+        m$("play").disabled = false;
+        m$("stop").disabled = true;
+      }
+    }
+
+    function mBindUI() {
+      m$("q").addEventListener("input", mRenderList);
+      m$("modo").addEventListener("change", mRenderList);
+      m$("cat").addEventListener("change", mRenderList);
+
+      m$("dronVol").addEventListener("input", () => {
+        if (mDronGain) mDronGain.gain.value = Number(m$("dronVol").value);
+      });
+      m$("pulseVol").addEventListener("input", () => {
+        if (mPulseGain) mPulseGain.gain.value = Number(m$("pulseVol").value);
+      });
+
+      m$("play").addEventListener("click", mStartEngine);
+      m$("stop").addEventListener("click", () => { mStopEngine(); });
+    }
+
+    mBindUI();
+    mLoadMantras();
+
+    updateToneLabels();
+    drawWaveform();
+  </script>
+</body>
+</html>
