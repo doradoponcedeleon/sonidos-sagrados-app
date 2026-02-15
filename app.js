@@ -3,6 +3,9 @@ let selected = null;
 
 let ctx = null;
 let master = null;
+let masterHP = null;
+let masterLP = null;
+let masterComp = null;
 
 let dronOsc = null;
 let harmOsc = null;
@@ -107,8 +110,29 @@ function ensureAudio() {
 
   ctx = new (window.AudioContext || window.webkitAudioContext)();
   master = ctx.createGain();
-  master.gain.value = 1.4;
-  master.connect(ctx.destination);
+  master.gain.value = 1.0;
+
+  masterHP = ctx.createBiquadFilter();
+  masterHP.type = "highpass";
+  masterHP.frequency.value = 60;
+  masterHP.Q.value = 0.7;
+
+  masterLP = ctx.createBiquadFilter();
+  masterLP.type = "lowpass";
+  masterLP.frequency.value = 6000;
+  masterLP.Q.value = 0.7;
+
+  masterComp = ctx.createDynamicsCompressor();
+  masterComp.threshold.value = -18;
+  masterComp.knee.value = 24;
+  masterComp.ratio.value = 3.5;
+  masterComp.attack.value = 0.01;
+  masterComp.release.value = 0.25;
+
+  master.connect(masterHP);
+  masterHP.connect(masterLP);
+  masterLP.connect(masterComp);
+  masterComp.connect(ctx.destination);
 
   dronGain = ctx.createGain();
   dronGain.gain.value = Number($("dronVol").value);
@@ -125,12 +149,12 @@ async function startEngine() {
     return;
   }
 
+  stopEngine(true);
   ensureAudio();
   if (ctx.state === "suspended") await ctx.resume();
-  stopEngine(true);
   if (master) {
     master.gain.cancelScheduledValues(ctx.currentTime);
-    master.gain.setValueAtTime(1.4, ctx.currentTime);
+    master.gain.setValueAtTime(1.0, ctx.currentTime);
   }
 
   const dronHz = Number($("dronHz").value);
@@ -227,7 +251,7 @@ async function startEngine() {
   $("stop").disabled = false;
 }
 
-function stopEngine(silent = false) {
+async function stopEngine(silent = false) {
   running = false;
   if (timer) { clearInterval(timer); timer = null; }
   setActiveSyllable(-1);
@@ -240,15 +264,33 @@ function stopEngine(silent = false) {
   stopNode(binOscL); disconnect(binOscL); binOscL = null;
   stopNode(binOscR); disconnect(binOscR); binOscR = null;
 
-  if (master && ctx) {
-    master.gain.cancelScheduledValues(ctx.currentTime);
-    master.gain.setValueAtTime(0.0001, ctx.currentTime);
+  if (ctx) {
+    try { ctx.suspend(); } catch {}
   }
 
+  if (master && ctx) {
+    master.gain.cancelScheduledValues(ctx.currentTime);
+    master.gain.setValueAtTime(0.0, ctx.currentTime);
+  }
+
+  if (dronGain) { try { dronGain.disconnect(); } catch {} }
+  if (pulseGain) { try { pulseGain.disconnect(); } catch {} }
+
+  if (master) { try { master.disconnect(); } catch {} }
+  if (masterHP) { try { masterHP.disconnect(); } catch {} }
+  if (masterLP) { try { masterLP.disconnect(); } catch {} }
+  if (masterComp) { try { masterComp.disconnect(); } catch {} }
+
   if (ctx) {
-    try { ctx.close(); } catch {}
+    const ctxToClose = ctx;
+    setTimeout(async () => {
+      try { await ctxToClose.close(); } catch {}
+    }, 80);
     ctx = null;
     master = null;
+    masterHP = null;
+    masterLP = null;
+    masterComp = null;
     dronGain = null;
     pulseGain = null;
   }
@@ -274,10 +316,14 @@ function bindUI() {
   $("play").addEventListener("click", startEngine);
   $("stop").addEventListener("click", () => { stopEngine(); });
 
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("sw.js").catch(()=>{});
-  }
+  // Desactivado para evitar caché agresivo en móviles
 }
 
 bindUI();
 loadMantras();
+
+// Corte de emergencia si la página se oculta o cierra
+window.addEventListener("pagehide", () => { stopEngine(true); });
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) stopEngine(true);
+});
