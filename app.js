@@ -5,6 +5,7 @@ let ctx = null;
 let master = null;
 
 let dronOsc = null;
+let harmOsc = null;
 let dronGain = null;
 
 let binOscL = null, binOscR = null;
@@ -127,6 +128,10 @@ async function startEngine() {
   ensureAudio();
   if (ctx.state === "suspended") await ctx.resume();
   stopEngine(true);
+  if (master) {
+    master.gain.cancelScheduledValues(ctx.currentTime);
+    master.gain.setValueAtTime(1.4, ctx.currentTime);
+  }
 
   const dronHz = Number($("dronHz").value);
   const bpm = Number($("bpm").value);
@@ -137,15 +142,15 @@ async function startEngine() {
   dronOsc.type = "sine";
   dronOsc.frequency.value = dronHz;
 
-  const harm = ctx.createOscillator();
-  harm.type = "sine";
-  harm.frequency.value = dronHz * 2;
+  harmOsc = ctx.createOscillator();
+  harmOsc.type = "sine";
+  harmOsc.frequency.value = dronHz * 2;
 
   const harmGain = ctx.createGain();
   harmGain.gain.value = 0.2;
 
   dronOsc.connect(dronGain);
-  harm.connect(harmGain);
+  harmOsc.connect(harmGain);
   harmGain.connect(dronGain);
 
   if (binauralOn && delta > 0) {
@@ -174,7 +179,7 @@ async function startEngine() {
   }
 
   dronOsc.start();
-  harm.start();
+  harmOsc.start();
   if (binOscL) binOscL.start();
   if (binOscR) binOscR.start();
 
@@ -231,8 +236,22 @@ function stopEngine(silent = false) {
   const disconnect = (node) => { try { node && node.disconnect && node.disconnect(); } catch {} };
 
   stopNode(dronOsc); disconnect(dronOsc); dronOsc = null;
+  stopNode(harmOsc); disconnect(harmOsc); harmOsc = null;
   stopNode(binOscL); disconnect(binOscL); binOscL = null;
   stopNode(binOscR); disconnect(binOscR); binOscR = null;
+
+  if (master && ctx) {
+    master.gain.cancelScheduledValues(ctx.currentTime);
+    master.gain.setValueAtTime(0.0001, ctx.currentTime);
+  }
+
+  if (ctx) {
+    try { ctx.close(); } catch {}
+    ctx = null;
+    master = null;
+    dronGain = null;
+    pulseGain = null;
+  }
 
   if (!silent) {
     $("play").disabled = false;
