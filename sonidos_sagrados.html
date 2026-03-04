@@ -189,6 +189,7 @@
           <button class="btn" data-instrument="bowl">Cuenco</button>
           <button class="btn" data-instrument="gong">Gong</button>
           <button class="btn" data-instrument="tibet-horn">Dungchen</button>
+          <button class="btn" data-instrument="white-noise">Ruido blanco</button>
         </div>
       </div>
       <a class="nav-link" href="mantras.html">Ir a Mantras</a>
@@ -232,6 +233,11 @@
       <div class="control">
         <label>Filtro armónicos: <span id="harm-filter-value">0.5</span></label>
         <input id="harm-filter" type="range" min="0" max="1" step="0.05" value="0.5" />
+      </div>
+
+      <div class="control">
+        <label>Color del ruido: <span id="noise-color-value">Neutro</span></label>
+        <input id="noise-color" type="range" min="0" max="1" step="0.01" value="0.5" />
       </div>
 
       <div class="cta">
@@ -290,9 +296,11 @@
       gongBright: document.getElementById("gong-bright"),
       bowlRound: document.getElementById("bowl-round"),
       harmFilter: document.getElementById("harm-filter"),
+      noiseColor: document.getElementById("noise-color"),
       gongBrightValue: document.getElementById("gong-bright-value"),
       bowlRoundValue: document.getElementById("bowl-round-value"),
       harmFilterValue: document.getElementById("harm-filter-value"),
+      noiseColorValue: document.getElementById("noise-color-value"),
       start: document.getElementById("start"),
       stop: document.getElementById("stop"),
       canvas: document.getElementById("scope"),
@@ -305,7 +313,8 @@
       flute: "Flauta",
       bowl: "Cuenco",
       gong: "Gong",
-      "tibet-horn": "Dungchen"
+      "tibet-horn": "Dungchen",
+      "white-noise": "Ruido blanco"
     };
 
 
@@ -382,6 +391,14 @@
         release: 0.5,
         sustain: true,
         noise: 0
+      },
+      "white-noise": {
+        ratios: [],
+        gains: [],
+        decay: 4.5,
+        attack: 0.02,
+        sustain: true,
+        noise: 0.35
       }
     };
 
@@ -444,6 +461,7 @@
       const harm = parseInt(ui.harm.value, 10);
       const verb = parseFloat(ui.verb.value);
       const decay = parseFloat(ui.decay.value);
+      const noiseColor = parseFloat(ui.noiseColor.value);
 
       ui.ampValue.textContent = amp.toFixed(2);
       ui.freqValue.textContent = freq.toFixed(0);
@@ -454,6 +472,15 @@
       ui.readFreq.textContent = `${freq.toFixed(0)} Hz`;
       ui.readVerb.textContent = `${Math.round(verb * 100)}%`;
       ui.readDecay.textContent = `${decay.toFixed(1)} s`;
+      ui.noiseColorValue.textContent = noiseColor < 0.25
+        ? "Marron"
+        : noiseColor < 0.45
+        ? "Rosa"
+        : noiseColor < 0.55
+        ? "Blanco"
+        : noiseColor < 0.75
+        ? "Azul"
+        : "Violeta";
 
       if (audioState.masterGain) {
         audioState.masterGain.gain.setTargetAtTime(amp, audioState.ctx.currentTime, 0.05);
@@ -471,10 +498,41 @@
               const ratio = profile.ratios[index % profile.ratios.length];
               node.osc.frequency.setTargetAtTime(freq * ratio, audioState.ctx.currentTime, 0.05);
             }
+          } else if (node.type === "noise-filter") {
+            setNoiseColor(node.filter, audioState.instrument, freq, noiseColor, node.role);
           }
         });
       }
       drawWaveform();
+    }
+
+    function setNoiseColor(filter, instrument, freq, color, role = "main") {
+      if (role !== "main") return;
+      const bright = (color - 0.5) * 2; // -1..1
+      const baseFreq = instrument === "gong"
+        ? freq * 2.2
+        : instrument === "tibet-horn"
+        ? 320
+        : freq * 1.6;
+      if (instrument === "white-noise") {
+        if (bright < -0.2) {
+          filter.type = "lowpass";
+          filter.frequency.value = 400 + (bright + 1) * 900;
+          filter.Q.value = 0.6;
+        } else if (bright > 0.2) {
+          filter.type = "highpass";
+          filter.frequency.value = 1200 + (bright - 0.2) * 2200;
+          filter.Q.value = 0.7;
+        } else {
+          filter.type = "allpass";
+          filter.frequency.value = 1000;
+          filter.Q.value = 0.01;
+        }
+      } else {
+        filter.type = "bandpass";
+        filter.frequency.value = baseFreq * (1 + bright * 0.35);
+        filter.Q.value = instrument === "tibet-horn" ? 0.55 : 0.8;
+      }
     }
 
     function startSound() {
@@ -590,9 +648,7 @@
         noise.buffer = buffer;
         noise.loop = profile.sustain;
         const filter = ctx.createBiquadFilter();
-        filter.type = "bandpass";
-        filter.frequency.value = audioState.instrument === "gong" ? freq * 2.2 : audioState.instrument === "tibet-horn" ? 320 : freq * 1.6;
-        filter.Q.value = audioState.instrument === "tibet-horn" ? 0.55 : 0.8;
+        setNoiseColor(filter, audioState.instrument, freq, parseFloat(ui.noiseColor.value));
         const noiseGain = ctx.createGain();
         noiseGain.gain.value = audioState.instrument === "tibet-horn" ? 0.06 : profile.noise;
         noise.connect(filter);
@@ -600,6 +656,7 @@
         noiseGain.connect(audioState.voiceGain);
         noise.start();
         audioState.nodes.push({ type: "noise", noise, gain: noiseGain });
+        audioState.nodes.push({ type: "noise-filter", filter, role: "main" });
 
         if (audioState.instrument === "gong") {
           const air = ctx.createBufferSource();
@@ -616,6 +673,7 @@
           airGain.connect(audioState.voiceGain);
           air.start();
           audioState.nodes.push({ type: "noise", noise: air, gain: airGain });
+          audioState.nodes.push({ type: "noise-filter", filter: airFilter, role: "air" });
         }
       }
 
@@ -780,6 +838,7 @@
       updateInstrument();
       drawWaveform();
     });
+    ui.noiseColor.addEventListener("input", updateParams);
 
     ui.start.addEventListener("click", () => {
       startSound();
@@ -788,7 +847,8 @@
 
     ui.stop.addEventListener("click", stopSound);
 
-        updateToneLabels();
+    updateToneLabels();
+    updateParams();
     drawWaveform();
   </script>
 </body>
