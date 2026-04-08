@@ -4,3 +4,8 @@
 127.0.0.1 - - [27/Feb/2026 10:39:21] "GET /sonidos_sagrados.html HTTP/1.1" 200 -
 127.0.0.1 - - [27/Feb/2026 10:39:57] "GET /index.html HTTP/1.1" 200 -
 127.0.0.1 - - [27/Feb/2026 10:40:00] "GET /sonidos_sagrados.html HTTP/1.1" 200 -
+127.0.0.1 - - [27/Feb/2026 13:53:49] "GET /mantras.html HTTP/1.1" 200 -
+127.0.0.1 - - [27/Feb/2026 13:53:49] "GET /style.css HTTP/1.1" 200 -
+127.0.0.1 - - [27/Feb/2026 13:53:49] "GET /app.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Feb/2026 13:53:49] "GET /mantras.json HTTP/1.1" 200 -
+127.0.0.1 - - [27/Feb/2026 13:53:49] "GET /manifest.json HTTP/1.1" 200 -
